@@ -908,3 +908,204 @@ document.getElementById('emailReceiptBtn').addEventListener('click', ()=>{
 document.querySelectorAll('a[href="#menu"]').forEach(a=>{
   a.addEventListener('click', ()=>{ closeDrawer(); });
 });
+
+
+/* ============================= AI FOOD ORDERING ASSISTANT ============================= */
+/*
+ * Lightweight client-side recommendation engine.
+ * It parses natural-language constraints and ranks the existing menu data.
+ * No API key or external service is required, so the demo remains safe to deploy.
+ */
+const aiPromptEl = document.getElementById('aiPrompt');
+const aiRecommendBtn = document.getElementById('aiRecommendBtn');
+const aiResultEl = document.getElementById('aiResult');
+
+function aiMoney(raw){
+  const match = String(raw||'').replace(/,/g,'').match(/(?:₹|rs\.?|inr)?\s*(\d{2,5})/i);
+  return match ? Number(match[1]) : null;
+}
+
+function aiParseRequest(text){
+  const q=(text||'').toLowerCase();
+  const budgetMatch =
+    q.match(/(?:under|below|within|max(?:imum)?|upto|up to|less than|budget(?: of)?|₹|rs\.?|inr)\s*[₹]?\s*(\d{2,5})/i) ||
+    q.match(/[₹]\s*(\d{2,5})/i);
+  const budget=budgetMatch ? aiMoney(budgetMatch[0]) : null;
+
+  const peopleMatch =
+    q.match(/(\d+)\s*(?:people|persons|person|pax|members|log|logo|logo?n|people)/i) ||
+    q.match(/for\s*(\d+)/i);
+  const people=peopleMatch ? Math.max(1,Math.min(10,Number(peopleMatch[1]))) : 1;
+
+  const veg = /\b(veg|vegetarian|veggie|shakahari)\b/i.test(q) && !/\bnon[-\s]?veg/i.test(q);
+  const nonveg = /\b(non[-\s]?veg|non vegetarian|chicken|meat|nonveg)\b/i.test(q);
+
+  const tastes=[];
+  const tasteMap=[
+    ['spicy',['spicy','hot','peri peri','chilli','chili','schezwan','masala']],
+    ['cheesy',['cheesy','cheese']],
+    ['creamy',['creamy','cream','white sauce','alfredo']],
+    ['chocolate',['chocolate','brownie','lava','kitkat','oreo']],
+    ['crispy',['crispy','crunchy','fried']],
+    ['light',['light','healthy','fresh']]
+  ];
+  tasteMap.forEach(([label,words])=>{ if(words.some(w=>q.includes(w))) tastes.push(label); });
+
+  return {budget,people,veg,nonveg,tastes};
+}
+
+function aiItemText(item){
+  return `${item.name} ${item.desc}`.toLowerCase();
+}
+
+function aiTasteScore(item,tastes){
+  if(!tastes.length) return 0;
+  const text=aiItemText(item);
+  let score=0;
+  tastes.forEach(t=>{
+    const words={
+      spicy:['spicy','peri peri','red pepper','tandoori','chilli','tangy','masala','schezwan'],
+      cheesy:['cheese','cheesy','cheese blast'],
+      creamy:['cream','creamy','white sauce','alfredo'],
+      chocolate:['chocolate','brownie','lava','kitkat','oreo'],
+      crispy:['crispy','fried','crisp','crunch'],
+      light:['fresh','vegetable','mint']
+    }[t]||[];
+    if(words.some(w=>text.includes(w))) score+=4;
+  });
+  return score;
+}
+
+function aiScoreItem(item,req){
+  let score=0;
+  if(req.veg && item.veg) score+=10;
+  if(req.nonveg && !item.veg) score+=10;
+  if((req.veg && !item.veg) || (req.nonveg && item.veg)) score-=25;
+  score += aiTasteScore(item,req.tastes);
+  if(item.pop) score+=2;
+  if(req.budget){
+    if(item.price<=req.budget) score+=2;
+    else score-=Math.min(15,(item.price-req.budget)/10);
+  }
+  return score;
+}
+
+function aiBuildRecommendation(req){
+  const items=menuData.flatMap(g=>g.items);
+  const compatible=items
+    .filter(it=>!((req.veg && !it.veg) || (req.nonveg && it.veg)))
+    .sort((a,b)=>aiScoreItem(b,req)-aiScoreItem(a,req));
+
+  const budget=req.budget || 500;
+  const targetCount=Math.max(1,Math.min(3,req.people));
+  const candidates=compatible.filter(it=>it.price<=budget);
+
+  if(!candidates.length) return {items:[],total:0};
+
+  // Prefer a small bundle that fits the budget and scales for the requested group.
+  let best=[];
+  let bestScore=-Infinity;
+
+  for(let i=0;i<candidates.length;i++){
+    const combo=[candidates[i]];
+    let total=candidates[i].price;
+    for(let j=i+1;j<candidates.length && combo.length<targetCount;j++){
+      const next=candidates[j];
+      if(combo.some(x=>x.id===next.id)) continue;
+      if(total+next.price<=budget){ combo.push(next); total+=next.price; }
+    }
+    const taste=combo.reduce((s,it)=>s+aiTasteScore(it,req.tastes),0);
+    const popularity=combo.reduce((s,it)=>s+(it.pop?1:0),0);
+    const peopleFit=Math.min(combo.length,req.people)*3;
+    const score=taste*5+popularity+peopleFit-(budget-total)/Math.max(20,budget)*2;
+    if(score>bestScore){bestScore=score;best=combo;}
+  }
+
+  return {items:best,total:best.reduce((s,it)=>s+it.price,0)};
+}
+
+function aiRenderRecommendation(requestText){
+  const req=aiParseRequest(requestText);
+  const result=aiBuildRecommendation(req);
+  aiResultEl.classList.remove('show');
+  aiResultEl.innerHTML='<div class="ai-loading">Analyzing your preferences and matching the menu…</div>';
+  aiResultEl.classList.add('show');
+
+  setTimeout(()=>{
+    if(!result.items.length){
+      aiResultEl.innerHTML=`<div class="ai-empty">I couldn't find a matching combination within ${req.budget?`₹${req.budget}`:'the selected budget'}. Try increasing the budget or relaxing one preference.</div>`;
+      return;
+    }
+
+    const constraints=[];
+    if(req.budget) constraints.push(`₹${req.budget} budget`);
+    if(req.people>1) constraints.push(`${req.people} people`);
+    if(req.veg) constraints.push('vegetarian');
+    if(req.nonveg) constraints.push('non-vegetarian');
+    if(req.tastes.length) constraints.push(req.tastes.join(', '));
+
+    const remaining=req.budget ? req.budget-result.total : null;
+    aiResultEl.innerHTML=`
+      <div class="ai-result-head">
+        <div>
+          <h3>Personalized recommendation</h3>
+          <p class="ai-interpretation">${constraints.length?`Matched: ${constraints.join(' · ')}`:'Matched to your natural-language request'}</p>
+        </div>
+        <span class="ai-badge"><span class="ai-pulse"></span>Smart match</span>
+      </div>
+      <div class="ai-reco-grid">
+        ${result.items.map(it=>`
+          <div class="ai-reco-item">
+            <img src="${imgUrl(it.img,180)}" alt="${it.name}" onerror="this.style.display='none'">
+            <div class="ai-reco-info">
+              <b>${it.name}</b>
+              <span>${it.veg?'Vegetarian':'Non-vegetarian'}${it.pop?' · Popular':''}</span>
+              <span class="ai-reco-price">₹${it.price}</span>
+            </div>
+            <button type="button" class="btn btn-ghost btn-sm ai-add-one" data-ai-add="${it.id}">Add</button>
+          </div>`).join('')}
+      </div>
+      <div class="ai-reco-actions">
+        <div>
+          <div class="ai-total">₹${result.total}${remaining!==null?` <small>₹${remaining} remaining</small>`:''}</div>
+          <div class="ai-reason">${req.tastes.length?'Selected for your taste preferences. ':' '}Recommendations prioritize dietary preference, budget, popularity and menu relevance.</div>
+        </div>
+        <button type="button" class="btn btn-primary" id="aiAddAllBtn">
+          Add Recommended Meal to Cart
+        </button>
+      </div>`;
+
+    aiResultEl.querySelectorAll('[data-ai-add]').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        addToCart(btn.dataset.aiAdd);
+        showToast('Added to cart', findItemById(btn.dataset.aiAdd).name);
+      });
+    });
+    document.getElementById('aiAddAllBtn').addEventListener('click',()=>{
+      result.items.forEach(it=>addToCart(it.id));
+      showToast('AI meal added', `${result.items.length} recommended item${result.items.length>1?'s':''} added to your cart.`);
+      openDrawer();
+    });
+  },420);
+}
+
+aiRecommendBtn.addEventListener('click',()=>{
+  const value=aiPromptEl.value.trim();
+  if(!value){
+    aiPromptEl.focus();
+    showToast('Tell me what you want', 'Example: spicy vegetarian meal for 2 people under ₹300.');
+    return;
+  }
+  aiRenderRecommendation(value);
+});
+
+aiPromptEl.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey) && e.key==='Enter') aiRecommendBtn.click();
+});
+
+document.querySelectorAll('[data-ai-example]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    aiPromptEl.value=btn.dataset.aiExample;
+    aiRenderRecommendation(btn.dataset.aiExample);
+  });
+});

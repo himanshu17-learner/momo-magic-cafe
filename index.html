@@ -213,6 +213,50 @@
   </div>
 </section>
 
+
+<!-- ============================= AI FOOD ORDERING ASSISTANT ============================= -->
+<section id="ai-assistant" class="section ai-assistant-section">
+  <div class="container">
+    <div class="ai-assistant-card glass reveal">
+      <div class="ai-assistant-head">
+        <div>
+          <p class="eyebrow">AI Food Ordering Assistant</p>
+          <h2>Tell us what you’re craving. <span class="accent">We’ll build the order.</span></h2>
+          <p class="ai-subtitle">Describe your budget, group size, dietary preference and taste in one sentence. The assistant turns your request into personalized menu recommendations.</p>
+        </div>
+        <div class="ai-badge" aria-label="AI recommendation engine">
+          <span class="ai-pulse"></span>
+          AI-powered
+        </div>
+      </div>
+
+      <div class="ai-input-wrap">
+        <textarea id="aiPrompt" rows="3" maxlength="280"
+          placeholder="Try: I need a spicy vegetarian meal for 2 people under ₹300"></textarea>
+        <div class="ai-input-footer">
+          <span id="aiPromptHint">Natural language · Budget · People · Veg/Non-veg · Taste</span>
+          <button type="button" class="btn btn-primary" id="aiRecommendBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z"/>
+              <path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8L19 16Z"/>
+            </svg>
+            Get AI Recommendations
+          </button>
+        </div>
+      </div>
+
+      <div class="ai-examples">
+        <span>Try an example:</span>
+        <button type="button" data-ai-example="I need a spicy vegetarian meal for 2 people under ₹300">₹300 · 2 people · spicy veg</button>
+        <button type="button" data-ai-example="Suggest a non-veg dinner under ₹500 for 3 people">₹500 · 3 people · non-veg</button>
+        <button type="button" data-ai-example="I want something vegetarian and cheesy under ₹400">₹400 · vegetarian · cheesy</button>
+      </div>
+
+      <div id="aiResult" class="ai-result" aria-live="polite"></div>
+    </div>
+  </div>
+</section>
+
 <!-- ============================= WHY CHOOSE US ============================= -->
 <section id="why" class="section">
   <div class="container">

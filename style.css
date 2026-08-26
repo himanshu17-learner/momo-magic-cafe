@@ -600,3 +600,67 @@ footer{background:#120B07;padding:64px 0 26px;border-top:1px solid var(--glass-b
 @media(max-width:859px){
   .hero-visual{margin-top:20px;}
 } 
+
+/* ============================= AI FOOD ORDERING ASSISTANT ============================= */
+.ai-assistant-section{padding-top:72px;}
+.ai-assistant-card{
+  padding:clamp(24px,5vw,52px);
+  overflow:hidden;
+  position:relative;
+  background:
+    radial-gradient(circle at 90% 0%,rgba(224,67,43,.18),transparent 32%),
+    rgba(35,24,16,.72);
+}
+.ai-assistant-card::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(135deg,rgba(243,169,59,.05),transparent 45%,rgba(224,67,43,.05));
+}
+.ai-assistant-head{position:relative;display:flex;justify-content:space-between;gap:28px;align-items:flex-start;margin-bottom:30px;}
+.ai-assistant-head h2{font-size:clamp(30px,4.5vw,48px);max-width:760px;}
+.ai-subtitle{color:var(--cream-dim);font-size:16px;max-width:720px;margin-top:14px;}
+.ai-badge{
+  display:inline-flex;align-items:center;gap:9px;white-space:nowrap;
+  padding:10px 14px;border:1px solid rgba(243,169,59,.3);
+  border-radius:100px;color:var(--marigold);font-size:12px;font-weight:700;
+  background:rgba(243,169,59,.08);
+}
+.ai-pulse{width:8px;height:8px;border-radius:50%;background:var(--marigold);box-shadow:0 0 0 5px rgba(243,169,59,.12);animation:aipulse 1.8s infinite;}
+@keyframes aipulse{50%{box-shadow:0 0 0 9px rgba(243,169,59,0);}}
+.ai-input-wrap{position:relative;border:1px solid var(--glass-border);border-radius:18px;background:rgba(24,15,10,.72);padding:16px;}
+#aiPrompt{
+  width:100%;resize:vertical;min-height:86px;border:0;outline:0;background:transparent;
+  color:var(--cream);font-size:16px;line-height:1.55;
+}
+#aiPrompt::placeholder{color:var(--cream-faint);}
+.ai-input-footer{display:flex;justify-content:space-between;align-items:center;gap:14px;padding-top:12px;border-top:1px solid var(--glass-border);}
+#aiPromptHint{font-size:12px;color:var(--cream-faint);}
+.ai-examples{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:14px;color:var(--cream-faint);font-size:12px;}
+.ai-examples button{padding:8px 11px;border-radius:100px;border:1px solid var(--glass-border);background:var(--glass-bg);font-size:12px;color:var(--cream-dim);transition:.25s;}
+.ai-examples button:hover{border-color:rgba(243,169,59,.45);color:var(--cream);transform:translateY(-1px);}
+.ai-result{display:none;margin-top:24px;}
+.ai-result.show{display:block;animation:airesultin .45s ease both;}
+@keyframes airesultin{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.ai-result-head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:16px;}
+.ai-result-head h3{font-size:24px;}
+.ai-interpretation{font-size:13px;color:var(--cream-dim);margin-top:5px;}
+.ai-reco-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+.ai-reco-item{display:flex;gap:13px;padding:13px;border:1px solid var(--glass-border);border-radius:16px;background:rgba(246,235,218,.035);align-items:center;}
+.ai-reco-item img{width:68px;height:68px;object-fit:cover;border-radius:12px;background:var(--surface-3);}
+.ai-reco-info{min-width:0;flex:1;}
+.ai-reco-info b{display:block;font-size:14px;}
+.ai-reco-info span{display:block;font-size:12px;color:var(--cream-dim);margin-top:3px;}
+.ai-reco-price{font-weight:700;color:var(--marigold)!important;}
+.ai-reco-actions{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-top:16px;padding-top:16px;border-top:1px solid var(--glass-border);}
+.ai-total{font-family:var(--font-display);font-size:24px;}
+.ai-total small{font-family:var(--font-body);font-size:11px;color:var(--cream-faint);display:block;font-weight:400;}
+.ai-reason{color:var(--cream-dim);font-size:13px;line-height:1.5;}
+.ai-empty{padding:18px;border:1px dashed var(--glass-border);border-radius:14px;color:var(--cream-dim);font-size:14px;}
+.ai-loading{display:flex;align-items:center;gap:10px;color:var(--cream-dim);font-size:14px;padding:16px 0;}
+.ai-loading::before{content:"";width:18px;height:18px;border:2px solid var(--glass-border);border-top-color:var(--marigold);border-radius:50%;animation:aispin .8s linear infinite;}
+@keyframes aispin{to{transform:rotate(360deg)}}
+@media(max-width:700px){
+  .ai-assistant-head{flex-direction:column;}
+  .ai-input-footer,.ai-reco-actions{align-items:stretch;flex-direction:column;}
+  .ai-reco-grid{grid-template-columns:1fr;}
+  #aiRecommendBtn{width:100%;}
+}
